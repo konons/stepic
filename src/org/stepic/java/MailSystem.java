@@ -1,6 +1,6 @@
 package org.stepic.java;
 
-import java.util.logging.*;
+import java.util.logging.Logger;
 
 /**
  * Created by Mikhail Valeyko on 19/10/2015.
@@ -173,22 +173,65 @@ public class MailSystem {
     }
 
     public static class UntrustworthyMailWorker implements MailService {
+        private MailService[] fakeMailServices;
+        private RealMailService realMailService;
+
+        public UntrustworthyMailWorker(MailService[] fakeMailServices) {
+            this.fakeMailServices = fakeMailServices;
+            realMailService = new RealMailService();
+        }
+
+        public RealMailService getRealMailService() {
+            return realMailService;
+        }
+
         @Override
         public Sendable processMail(Sendable mail) {
-            return null;
+            for (MailService mailService : fakeMailServices) {
+                mail = mailService.processMail(mail);
+            }
+            return realMailService.processMail(mail);
         }
     }
 
     public static class Spy implements MailService {
+        private final Logger LOGGER;
+
+        public Spy(Logger logger) {
+            this.LOGGER = logger;
+        }
+
         @Override
         public Sendable processMail(Sendable mail) {
-            return null;
+            if (mail instanceof MailMessage) {
+                if (mail.getFrom().equals(AUSTIN_POWERS) || mail.getTo().equals(AUSTIN_POWERS)) {
+                    LOGGER.warning("Detected target mail correspondence: from {from} to {to} \"{message}\"");
+                } else {
+                    LOGGER.info("Usual correspondence: from {from} to {to}");
+                }
+            }
+            return mail;
         }
     }
 
     public static class Thief implements MailService {
+        private final int MIN_PRICE;
+        private int stolenValue;
+
+        public Thief(int minPrice) {
+            MIN_PRICE = minPrice;
+            stolenValue = 0;
+        }
+
+        public int getStolenValue() {
+            return stolenValue;
+        }
+
         @Override
         public Sendable processMail(Sendable mail) {
+            if (mail instanceof MailPackage) {
+                // TODO: implement
+            }
             return null;
         }
     }
