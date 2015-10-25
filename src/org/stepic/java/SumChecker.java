@@ -19,7 +19,7 @@ public class SumChecker {
     }
 
     public static void main(String[] args) throws IOException {
-        InputStream stream = new ByteArrayInputStream( new byte[] { 0x33, 0x45, 0x01});
+        InputStream stream = new ByteArrayInputStream(new byte[] {0x33, 0x45, 0x01});
         System.out.println(checkSumOfStream(stream));
     }
 }
