@@ -10,19 +10,11 @@ public class MailSystem {
     public static final String WEAPONS = "weapons";
     public static final String BANNED_SUBSTANCE = "banned substance";
 
-    /*
-    ?????????: ????????, ??????? ????? ????????? ?? ?????.
-    ? ????? ???????? ????? ???????? ?? ???? ? ???? ???????????? ??????.
-    */
-    public static interface Sendable {
+    public interface Sendable {
         String getFrom();
         String getTo();
     }
 
-    /*
-    ??????????? ?????,??????? ????????? ?????????????? ?????? ????????
-    ????????? ? ?????????? ?????? ? ??????????????? ????? ??????.
-    */
     public static abstract class AbstractSendable implements Sendable {
 
         protected final String from;
@@ -58,9 +50,6 @@ public class MailSystem {
 
     }
 
-    /*
-    ??????, ? ???????? ???? ?????, ??????? ????? ???????? ? ??????? ?????? `getMessage`
-    */
     public static class MailMessage extends AbstractSendable {
 
         private final String message;
@@ -89,9 +78,6 @@ public class MailSystem {
 
     }
 
-    /*
-    ???????, ?????????? ??????? ????? ???????? ? ??????? ?????? `getContent`
-    */
     public static class MailPackage extends AbstractSendable {
         private final Package content;
 
@@ -119,9 +105,6 @@ public class MailSystem {
 
     }
 
-    /*
-    ?????, ??????? ?????? ???????. ? ??????? ???? ????????? ???????? ??????????? ? ????????????? ????????.
-    */
     public static class Package {
         private final String content;
         private final int price;
@@ -153,21 +136,14 @@ public class MailSystem {
         }
     }
 
-    /*
-    ?????????, ??????? ?????? ?????, ??????? ????? ?????-???? ??????? ?????????? ???????? ??????.
-    */
-    public static interface MailService {
+    public interface MailService {
         Sendable processMail(Sendable mail);
     }
 
-    /*
-    ?????, ? ??????? ?????? ?????? ????????? ?????
-    */
     public static class RealMailService implements MailService {
 
         @Override
         public Sendable processMail(Sendable mail) {
-            // ????? ?????? ??? ????????? ??????? ???????? ?????.
             return mail;
         }
     }
@@ -205,9 +181,10 @@ public class MailSystem {
         public Sendable processMail(Sendable mail) {
             if (mail instanceof MailMessage) {
                 if (mail.getFrom().equals(AUSTIN_POWERS) || mail.getTo().equals(AUSTIN_POWERS)) {
-                    LOGGER.warning("Detected target mail correspondence: from {from} to {to} \"{message}\"");
+                    LOGGER.warning("Detected target mail correspondence: from " + mail.getFrom() +
+                            " to " + mail.getTo() + " \"" + ((MailMessage) mail).getMessage() + "\"");
                 } else {
-                    LOGGER.info("Usual correspondence: from {from} to {to}");
+                    LOGGER.info("Usual correspondence: from " + mail.getFrom() + " to " + mail.getTo());
                 }
             }
             return mail;
@@ -230,16 +207,75 @@ public class MailSystem {
         @Override
         public Sendable processMail(Sendable mail) {
             if (mail instanceof MailPackage) {
-                // TODO: implement
+                MailPackage mailPackage = (MailPackage) mail;
+                Package aPackage = mailPackage.getContent();
+                int price = aPackage.getPrice();
+                if (price >= MIN_PRICE) {
+                    stolenValue += price;
+                    Package content = new Package("stones instead of " + aPackage.getContent(), 0);
+                    mail = new MailPackage(mailPackage.getFrom(), mailPackage.getTo(), content);
+                }
             }
-            return null;
+            return mail;
+        }
+    }
+
+    public static class IllegalPackageException extends RuntimeException {
+        public IllegalPackageException() {
+        }
+
+        public IllegalPackageException(String message) {
+            super(message);
+        }
+
+        public IllegalPackageException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public IllegalPackageException(Throwable cause) {
+            super(cause);
+        }
+
+        public IllegalPackageException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+            super(message, cause, enableSuppression, writableStackTrace);
+        }
+    }
+
+    public static class StolenPackageException extends RuntimeException {
+        public StolenPackageException() {
+        }
+
+        public StolenPackageException(String message) {
+            super(message);
+        }
+
+        public StolenPackageException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public StolenPackageException(Throwable cause) {
+            super(cause);
+        }
+
+        public StolenPackageException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+            super(message, cause, enableSuppression, writableStackTrace);
         }
     }
 
     public static class Inspector implements MailService {
         @Override
         public Sendable processMail(Sendable mail) {
-            return null;
+            if (mail instanceof MailPackage) {
+                MailPackage mailPackage = (MailPackage) mail;
+                String content = mailPackage.getContent().getContent();
+                if (content.equals(WEAPONS) || content.equals(BANNED_SUBSTANCE)) {
+                    throw new IllegalPackageException();
+                }
+                if (content.contains("stones")) {
+                    throw new StolenPackageException();
+                }
+            }
+            return mail;
         }
     }
 }
