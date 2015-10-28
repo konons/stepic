@@ -12,26 +12,17 @@ import java.util.stream.Stream;
 public class TopWords {
     public static void main(String[] args) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-//        List<String> topWords = linesHandler(reader.lines());
-
-        List<String> topWords = new ArrayList<>();
-        topWords.add("Мама мыла-мыла-мыла раму!");
-//        topWords.add("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sodales consectetur purus at faucibus. Donec mi quam, tempor vel ipsum non, faucibus suscipit massa. Morbi lacinia velit blandit tincidunt efficitur. Vestibulum eget metus imperdiet sapien laoreet faucibus. Nunc eget vehicula mauris, ac auctor lorem. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vel odio nec mi tempor dignissim.");
-        topWords = linesHandler(topWords.stream());
-
-        for (String word : topWords) {
-            System.out.println(word);
-        }
+        getTop10Words(reader.lines()).forEach(System.out::println);
     }
 
-    public static List<String> linesHandler(Stream<String> stream) {
+    public static Stream<String> getTop10Words(Stream<String> linesStream) {
         Map<String, Long> map = new HashMap<>();
-        stream.map(line -> line.split("[^a-zA-Zа-яА-Я0-9]+"))
+        linesStream.map(line -> line.split("[^a-zA-ZР°-СЏРђ-РЇ0-9]+"))
                 .flatMap(Arrays::stream)
                 .map(String::toLowerCase)
                 .forEach(word -> map.put(word, map.containsKey(word) ? map.get(word) + 1 : 1L));
-        List<String> list = new LinkedList<>();
-        map.entrySet().stream().sorted((o1, o2) -> {
+
+        return map.entrySet().stream().sorted((o1, o2) -> {
             if (o1.getValue() < o2.getValue()) {
                 return 1;
             }
@@ -39,7 +30,6 @@ public class TopWords {
                 return o1.getKey().compareTo(o2.getKey());
             }
             return -1;
-        }).limit(10).forEach(stringLongEntry -> list.add(stringLongEntry.getKey()));
-        return list;
+        }).limit(10).map(Map.Entry::getKey);
     }
 }
